@@ -1,0 +1,126 @@
+version: 2
+
+models:
+  - name: int_product_trends_normalized
+    description: Per-product Google Trends interest, anchorless (each product self-scaled 0-100).
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: normalized_search_interest
+        tests:
+          - not_null
+
+  - name: int_ingredient_trends_normalized
+    description: Per-ingredient Google Trends interest, anchorless (each ingredient self-scaled 0-100).
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: ingredient_name
+        tests:
+          - not_null
+      - name: normalized_search_interest
+        tests:
+          - not_null
+
+  - name: int_ingredient_trend_candidates
+    description: Ranked active-ingredient cohort used by the ingredient trends ingest.
+    columns:
+      - name: ingredient_name
+        tests:
+          - not_null
+          - unique
+      - name: trend_rank
+        tests:
+          - not_null
+          - unique
+
+  - name: int_product_search_keywords
+    description: Probed winning Google Trends keyword per pilot product.
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+      - name: search_keyword
+        tests:
+          - not_null
+
+  - name: fct_product_trends
+    description: Product-level trends mart with raw and normalized search interest.
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: search_interest
+        tests:
+          - not_null
+
+  - name: fct_ingredients_trends
+    description: Ingredient-level trends mart with raw and normalized search interest.
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: ingredient_name
+        tests:
+          - not_null
+      - name: search_interest
+        tests:
+          - not_null
+
+  - name: fct_product_trends_wow
+    description: Historical week-over-week product search interest change by snapshot date.
+    columns:
+      - name: snapshot_date
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+
+  - name: fct_ingredient_trends_wow
+    description: Historical week-over-week ingredient search interest change by snapshot date.
+    columns:
+      - name: snapshot_date
+        tests:
+          - not_null
+      - name: ingredient_name
+        tests:
+          - not_null
+
+  - name: fct_ingredient_trends_by_tag
+    description: >
+      Ingredient trends at date x ingredient x tag grain. Use tag_type = purpose for
+      commonly_known_as breakdowns. Prefer trends_tracked_product_count (not product_count)
+      for product counts aligned with fct_product_trends (~163 products).
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: ingredient_name
+        tests:
+          - not_null
+      - name: tag_name
+        tests:
+          - not_null
+      - name: tag_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['purpose', 'benefit']
+      - name: search_interest
+        tests:
+          - not_null
+      - name: wow_search_interest_delta
+        description: Ingredient-level WoW delta. Do not AVG in tag pivot tables.
+      - name: tag_wow_search_interest_pct_change
+        description: Tag-level WoW pct from AVG(search_interest) within tag x date. Use MAX in Looker pivot tables.

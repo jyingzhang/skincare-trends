@@ -1,0 +1,30 @@
+---
+description: Use personal Gmail GCP credentials in personal_codebase (not Wayfair)
+alwaysApply: true
+---
+
+# Personal GCP auth (not Wayfair)
+
+This workspace is a **personal** project on `skincare-trends-dev`. Do not use Wayfair credentials.
+
+Before running dbt, `bq`, or Python ingest against BigQuery:
+
+```bash
+source scripts/use_personal_gcp.sh
+```
+
+Expected account: `yingjzhang02@gmail.com`  
+Expected project: `skincare-trends-dev`  
+Gcloud config name: `personal-codebase`
+
+- **dbt** uses Application Default Credentials (ADC), not the gcloud active account.
+- **`bq` CLI** uses the gcloud config selected via `CLOUDSDK_ACTIVE_CONFIG_NAME`.
+- Global gcloud default may stay on Wayfair; this repo overrides via `scripts/use_personal_gcp.sh`.
+
+If BigQuery returns `bigquery.jobs.create permission denied`, ADC is on the wrong account. Re-login:
+
+```bash
+gcloud auth application-default login --account=yingjzhang02@gmail.com \
+  --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/bigquery
+gcloud auth application-default set-quota-project skincare-trends-dev
+```

@@ -1,0 +1,25 @@
+# Run dbt from dbt_project/ with:
+#   ./dbt_local.sh run             # BigQuery (default target: prod)
+#   ./dbt_local.sh run --target dev   # local DuckDB
+#
+# Personal codebase auth (NOT Wayfair):
+#   source ../../scripts/use_personal_gcp.sh
+# dbt uses Application Default Credentials (ADC). If BQ fails with Access Denied:
+#   gcloud auth application-default login --account=yingjzhang02@gmail.com \
+#     --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/bigquery
+#   gcloud auth application-default set-quota-project skincare-trends-dev
+
+skincare_trends:
+  target: prod
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('SKINCARE_DUCKDB_PATH', '../warehouse/skincare.duckdb') }}"
+      threads: 4
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('DBT_GCP_PROJECT', 'skincare-trends-dev') }}"
+      dataset: skincare_trends
+      location: US
+      threads: 4

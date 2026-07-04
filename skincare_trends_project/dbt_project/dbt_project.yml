@@ -1,0 +1,152 @@
+name: skincare_trends
+version: "1.0.0"
+config-version: 2
+
+profile: skincare_trends
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+# Materialization strategy (BigQuery / prod is default):
+#
+#   staging                         → view     (thin casts/filters on raw sources)
+#   intermediate (most)             → view     (transforms; cheap to rebuild)
+#   intermediate (heavy joins)      → table    (product_ingredients, pilot, stability)
+#   intermediate (date x entity)    → table, partitioned on date
+#                                   (int_*_trends_normalized — via config_partitioned_trends)
+#   intermediate (date x entity wow)  → table    (int_*_trends_wow — WoW delta per snapshot)
+#   marts (entity grain)            → table    (review summaries, sentiment)
+#   marts (date x entity trends)    → table, partitioned on date
+#                                   (fct_*_trends — via config_partitioned_trends)
+#   marts (date x entity wow)       → table, partitioned on snapshot_date
+#                                   (fct_*_trends_wow — historical WoW time series)
+#
+# Why table instead of incremental insert_overwrite for date-grain trends:
+#   BigQuery incremental runs use DML (partition overwrite), which requires billing
+#   enabled on the GCP project. On the free tier, only CREATE TABLE (full refresh)
+#   works. Raw trend tables are full-replaced on each ingest anyway, so rebuilding
+#   these partitioned tables on every dbt run is acceptable at current data volume.
+#   Revisit incremental when billing is enabled and ingest becomes append-only.
+#
+# Partition expiration (BigQuery free tier):
+#   skincare_trends dataset defaults to 60-day partition expiry. On sandbox/free tier,
+#   BQ also rejects expiration > 60 days. Partitioned trend tables therefore keep only
+#   ~8 recent weeks. config_partitioned_trends skips partition_by on BigQuery until
+#   billing is enabled; then re-enable partition_by + partition_expiration_days.
+#
+# Tags (inherit down the folder tree; models accumulate all ancestor tags):
+#
+#   Layer:     staging | intermediate | marts | seeds
+#   Domain:    trends | products | ingredients | reviews
+#   Pipeline:  google_trends | normalized | wow | time_series
+#   Cohort:    pilot | ingest | sentiment
+#
+# Examples (dbt 1.x: comma = AND, space = OR):
+#   dbt run --select tag:trends                    # full Google Trends pipeline
+#   dbt run --select tag:wow                       # WoW snapshot + historical marts
+#   dbt run --select tag:marts,tag:time_series     # date-grain marts only (AND)
+#   dbt run --select tag:staging tag:seeds         # staging models or seeds (OR)
+#   dbt run --select tag:ingest                    # models read by Python ingest
+#   dbt test --select tag:google_trends+           # trend models and downstream tests
+
+seeds:
+  skincare_trends:
+    +tags: [seeds, ingredients]
+
+models:
+  skincare_trends:
+    staging:
+      +materialized: view
+      +tags: [staging]
+      stg_product_search_trends:
+        +tags: [trends, google_trends]
+      stg_product_search_keyword_candidates:
+        +tags: [products, pilot, ingest]
+      stg_product_search_keywords:
+        +tags: [products, pilot, ingest]
+      stg_ingredient_search_trends:
+        +tags: [trends, google_trends]
+      stg_sephora_products:
+        +tags: [products]
+      stg_sephora_reviews:
+        +tags: [reviews, products]
+      stg_product_review_summaries:
+        +tags: [reviews, products]
+
+    intermediate:
+      +materialized: view
+      +tags: [intermediate]
+
+      products:
+        +tags: [products]
+        int_sephora_product_ingredients:
+          +materialized: table
+          +tags: [ingredients]
+        int_pilot_product_cohort:
+          +materialized: table
+          +tags: [pilot, ingest]
+        int_pilot_products:
+          +materialized: table
+          +tags: [pilot, ingest]
+        int_product_search_keyword_candidates:
+          +materialized: table
+          +tags: [pilot, ingest]
+        int_product_search_keywords:
+          +materialized: table
+          +tags: [pilot, ingest]
+        int_product_ingredient_name_mentions:
+          +tags: [ingredients, reviews]
+        fct_ingredient_review_sentiment:
+          +tags: [marts, ingredients, reviews, sentiment]
+
+      ingredients:
+        +tags: [ingredients]
+        int_top_used_active_ingredients:
+          +tags: [ingest]
+        int_ingredient_review_sentiment:
+          +tags: [reviews, sentiment]
+
+      trends:
+        +tags: [trends]
+        int_product_trends_normalized:
+          +materialized: table
+          +tags: [google_trends, normalized, time_series]
+        int_ingredient_trends_normalized:
+          +materialized: table
+          +tags: [google_trends, normalized, time_series]
+        int_product_trends_wow:
+          +materialized: table
+          +tags: [wow, time_series, pilot]
+        int_ingredient_trends_wow:
+          +materialized: table
+          +tags: [wow, time_series]
+        int_ingredient_trend_candidates:
+          +materialized: table
+          +tags: [ingredients, ingest]
+        int_ingredient_trends_cohort:
+          +materialized: table
+          +tags: [ingredients, ingest, google_trends]
+        int_product_review_stability:
+          +materialized: table
+          +tags: [reviews, pilot]
+        int_product_review_velocity:
+          +tags: [reviews, pilot]
+
+    marts:
+      +materialized: table
+      +tags: [marts]
+      fct_product_trends:
+        +tags: [trends, google_trends, time_series, pilot]
+      fct_ingredients_trends:
+        +tags: [trends, google_trends, time_series]
+      fct_product_trends_wow:
+        +tags: [trends, wow, time_series, pilot]
+      fct_ingredient_trends_wow:
+        +tags: [trends, wow, time_series]
+      fct_product_review_summaries:
+        +tags: [reviews, pilot]

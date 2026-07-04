@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+
+# Local DuckDB files (same path as ingest/db.py and dbt profiles default)
+warehouse/*.duckdb
+warehouse/*.duckdb.wal
+
+# Large raw extracts (adjust if you prefer versioning samples only)
+data/raw/
+
+# Environment variables
+.env
+
+# dbt
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/

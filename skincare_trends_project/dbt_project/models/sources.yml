@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{% if target.type == 'bigquery' %}{{ env_var('DBT_GCP_PROJECT', 'skincare-trends-dev') }}{% endif %}"
+    schema: raw
+    description: Raw ingest tables loaded by Python into the raw dataset (BigQuery) or raw schema (DuckDB).
+    tables:
+      - name: raw_trends
+      - name: raw_sephora_products
+      - name: raw_sephora_reviews
+      - name: raw_product_review_summaries
+      - name: raw_product_trends
+      - name: raw_product_search_keyword_candidates
+      - name: raw_product_search_keywords

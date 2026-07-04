@@ -1,0 +1,15 @@
+version: 2
+
+seeds:
+  - name: ingredients_with_active_flag
+    config:
+      column_types:
+        ingredient_name: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
+        is_active: "{{ 'INT64' if target.type == 'bigquery' else 'integer' }}"
+  - name: top_used_ingredients_benefits
+    config:
+      column_types:
+        ingredient_name: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
+        product_count: "{{ 'INT64' if target.type == 'bigquery' else 'integer' }}"
+        benefits: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
+        commonly_known_as: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
