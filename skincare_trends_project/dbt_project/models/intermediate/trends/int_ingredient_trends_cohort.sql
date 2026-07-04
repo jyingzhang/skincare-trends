@@ -29,6 +29,7 @@ WITH ranked AS (
         pc.trends_tracked_product_count,
         s.benefits_raw,
         s.commonly_known_as_raw,
+        s.ingredient_definition,
         ROW_NUMBER() OVER (
             ORDER BY s.product_count DESC, s.ingredient_name
         ) AS trend_rank
@@ -48,6 +49,7 @@ SELECT
     trends_tracked_product_count,
     benefits_raw,
     commonly_known_as_raw,
+    ingredient_definition,
     CASE
         WHEN ingredient_name IN (
             {%- for ing in ambiguous_ingredients %}

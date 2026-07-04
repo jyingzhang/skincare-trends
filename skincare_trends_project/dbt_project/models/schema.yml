@@ -124,3 +124,16 @@ models:
         description: Ingredient-level WoW delta. Do not AVG in tag pivot tables.
       - name: tag_wow_search_interest_pct_change
         description: Tag-level WoW pct from AVG(search_interest) within tag x date. Use MAX in Looker pivot tables.
+
+  - name: dim_ingredient_dictionary
+    description: >
+      Ingredient glossary for Data Studio / Looker. One row per curated ingredient with
+      display name, benefits, aliases (commonly_known_as), and definition text.
+    columns:
+      - name: ingredient_name
+        tests:
+          - not_null
+          - unique
+      - name: ingredient_name_raw
+        tests:
+          - not_null

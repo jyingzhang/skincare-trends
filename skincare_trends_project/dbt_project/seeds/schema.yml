@@ -13,3 +13,4 @@ seeds:
         product_count: "{{ 'INT64' if target.type == 'bigquery' else 'integer' }}"
         benefits: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
         commonly_known_as: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
+        ingredient_definition: "{{ 'STRING' if target.type == 'bigquery' else 'varchar' }}"
