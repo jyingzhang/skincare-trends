@@ -27,6 +27,7 @@ SELECT
     s.search_keyword,
     s.benefits_raw AS benefits,
     s.commonly_known_as_raw AS commonly_known_as,
+    s.ingredient_definition,
     s.product_count,
     s.pilot_product_count,
     s.trends_tracked_product_count,

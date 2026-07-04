@@ -148,5 +148,7 @@ models:
         +tags: [trends, wow, time_series, pilot]
       fct_ingredient_trends_wow:
         +tags: [trends, wow, time_series]
+      dim_ingredient_dictionary:
+        +tags: [ingredients, dictionary]
       fct_product_review_summaries:
         +tags: [reviews, pilot]
